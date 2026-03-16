@@ -72,9 +72,6 @@ services:
     healthCheckPath: /
     envVars:
       - key: BACKEND_URL
-        fromService:
-          type: web
-          name: insight-backend
-          property: hostport
+        value: http://insight-backend:10000
       - key: NODE_ENV
         value: production
