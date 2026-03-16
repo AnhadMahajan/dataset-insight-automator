@@ -5,7 +5,6 @@ services:
   - type: redis
     name: insight-redis
     plan: free
-    maxmemoryPolicy: noeviction
     ipAllowList: []
 
   # -------------------------------------------------------------------
@@ -94,7 +93,7 @@ services:
     runtime: docker
     dockerfilePath: ./frontend/Dockerfile
     dockerContext: ./frontend
-    buildArgs:
+    dockerBuildArgs:
       NEXT_PUBLIC_API_BASE_URL: https://insight-backend.onrender.com
     healthCheckPath: /
     envVars:
