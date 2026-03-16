@@ -71,5 +71,10 @@ services:
     dockerContext: ./frontend
     healthCheckPath: /
     envVars:
-      - key: NEXT_PUBLIC_API_BASE_URL
-        value: https://insight-backend.onrender.com
+      - key: BACKEND_URL
+        fromService:
+          type: web
+          name: insight-backend
+          property: hostport
+      - key: NODE_ENV
+        value: production
