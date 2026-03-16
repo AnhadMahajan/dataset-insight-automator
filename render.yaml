@@ -93,8 +93,6 @@ services:
     runtime: docker
     dockerfilePath: ./frontend/Dockerfile
     dockerContext: ./frontend
-    dockerBuildArgs:
-      NEXT_PUBLIC_API_BASE_URL: https://insight-backend.onrender.com
     healthCheckPath: /
     envVars:
       - key: NEXT_PUBLIC_API_BASE_URL
