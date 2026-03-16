@@ -1,0 +1,40 @@
+services:
+  redis:
+    command: ["redis-server", "--appendonly", "yes"]
+    restart: unless-stopped
+    ports: []
+    healthcheck:
+      test: ["CMD", "redis-cli", "ping"]
+      interval: 10s
+      timeout: 3s
+      retries: 5
+
+  backend:
+    restart: unless-stopped
+    environment:
+      ENVIRONMENT: ${ENVIRONMENT:-production}
+    depends_on:
+      redis:
+        condition: service_healthy
+    healthcheck:
+      test: ["CMD", "python", "-c", "import urllib.request; urllib.request.urlopen('http://localhost:8000/health', timeout=3)"]
+      interval: 20s
+      timeout: 5s
+      retries: 5
+
+  worker:
+    restart: unless-stopped
+    depends_on:
+      redis:
+        condition: service_healthy
+
+  frontend:
+    restart: unless-stopped
+    depends_on:
+      backend:
+        condition: service_healthy
+    healthcheck:
+      test: ["CMD", "node", "-e", "fetch('http://localhost:3000').then(r=>{if(!r.ok) process.exit(1)}).catch(()=>process.exit(1))"]
+      interval: 20s
+      timeout: 5s
+      retries: 5

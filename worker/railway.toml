@@ -1,0 +1,8 @@
+[build]
+builder = "dockerfile"
+dockerfilePath = "Dockerfile"
+
+[deploy]
+startCommand = "celery -A worker_app.tasks worker --loglevel=info -Q sales-insight"
+restartPolicyType = "on_failure"
+restartPolicyMaxRetries = 3

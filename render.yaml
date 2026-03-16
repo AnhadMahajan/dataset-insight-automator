@@ -1,0 +1,102 @@
+services:
+  # -------------------------------------------------------------------
+  # Redis (free managed instance on Render)
+  # -------------------------------------------------------------------
+  - type: redis
+    name: insight-redis
+    plan: free
+    maxmemoryPolicy: noeviction
+    ipAllowList: []
+
+  # -------------------------------------------------------------------
+  # Backend (FastAPI)
+  # -------------------------------------------------------------------
+  - type: web
+    name: insight-backend
+    plan: free
+    runtime: docker
+    dockerfilePath: ./backend/Dockerfile
+    dockerContext: ./backend
+    healthCheckPath: /health
+    envVars:
+      - key: APP_NAME
+        value: Dataset Insight Automator API
+      - key: ENVIRONMENT
+        value: production
+      - key: API_V1_PREFIX
+        value: /api/v1
+      - key: REDIS_URL
+        fromService:
+          type: redis
+          name: insight-redis
+          property: connectionString
+      - key: CELERY_BROKER_URL
+        fromService:
+          type: redis
+          name: insight-redis
+          property: connectionString
+      - key: CELERY_RESULT_BACKEND
+        fromService:
+          type: redis
+          name: insight-redis
+          property: connectionString
+      - key: MAX_UPLOAD_SIZE_MB
+        value: "10"
+      - key: ALLOWED_EXTENSIONS
+        value: csv,xlsx,xls
+      - key: CORS_ORIGINS
+        value: https://insight-frontend.onrender.com
+      - key: UPLOAD_RATE_LIMIT
+        value: 10/minute
+      - key: STATUS_RATE_LIMIT
+        value: 60/minute
+
+  # -------------------------------------------------------------------
+  # Worker (Celery)
+  # -------------------------------------------------------------------
+  - type: worker
+    name: insight-worker
+    plan: free
+    runtime: docker
+    dockerfilePath: ./worker/Dockerfile
+    dockerContext: ./worker
+    envVars:
+      - key: REDIS_URL
+        fromService:
+          type: redis
+          name: insight-redis
+          property: connectionString
+      - key: CELERY_BROKER_URL
+        fromService:
+          type: redis
+          name: insight-redis
+          property: connectionString
+      - key: CELERY_RESULT_BACKEND
+        fromService:
+          type: redis
+          name: insight-redis
+          property: connectionString
+      - key: GEMINI_API_KEY
+        sync: false
+      - key: GEMINI_MODEL
+        value: gemini-1.5-flash
+      - key: RESEND_API_KEY
+        sync: false
+      - key: RESEND_FROM_EMAIL
+        value: insights@resend.dev
+
+  # -------------------------------------------------------------------
+  # Frontend (Next.js)
+  # -------------------------------------------------------------------
+  - type: web
+    name: insight-frontend
+    plan: free
+    runtime: docker
+    dockerfilePath: ./frontend/Dockerfile
+    dockerContext: ./frontend
+    buildArgs:
+      NEXT_PUBLIC_API_BASE_URL: https://insight-backend.onrender.com
+    healthCheckPath: /
+    envVars:
+      - key: NEXT_PUBLIC_API_BASE_URL
+        value: https://insight-backend.onrender.com

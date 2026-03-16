@@ -1,0 +1,89 @@
+@tailwind base;
+@tailwind components;
+@tailwind utilities;
+
+:root {
+  --bg: #f3f4f6;
+  --fg: #0f172a;
+  --muted: #64748b;
+  --glass: rgba(255, 255, 255, 0.65);
+  --card-padding: 1.5rem;
+  --radius-xl: 0.95rem;
+  --nav-height: 4rem;
+  --btn-h-default: 2.75rem;
+  --btn-px-default: 1.25rem;
+  --btn-h-sm: 2.25rem;
+  --btn-px-sm: 1rem;
+  --btn-h-lg: 3rem;
+  --btn-px-lg: 1.5rem;
+  --tooltip-bg: rgba(255, 255, 255, 0.96);
+  --tooltip-border: rgba(226, 232, 240, 0.95);
+}
+
+html.dark {
+  --bg: #020617;
+  --fg: #e2e8f0;
+  --muted: #94a3b8;
+  --glass: rgba(15, 23, 42, 0.65);
+  --tooltip-bg: rgba(15, 23, 42, 0.94);
+  --tooltip-border: rgba(71, 85, 105, 0.8);
+}
+
+html.density-compact {
+  font-size: 15px;
+  --card-padding: 1rem;
+  --radius-xl: 0.8rem;
+  --nav-height: 3.5rem;
+  --btn-h-default: 2.4rem;
+  --btn-px-default: 1rem;
+  --btn-h-sm: 2rem;
+  --btn-px-sm: 0.875rem;
+  --btn-h-lg: 2.7rem;
+  --btn-px-lg: 1.25rem;
+}
+
+html,
+body {
+  height: 100%;
+}
+
+body {
+  background:
+    radial-gradient(circle at 20% 10%, rgba(99, 102, 241, 0.1), transparent 45%),
+    radial-gradient(circle at 85% 22%, rgba(139, 92, 246, 0.12), transparent 45%),
+    var(--bg);
+  color: var(--fg);
+  font-family: var(--font-body), sans-serif;
+}
+
+html.dark body {
+  background:
+    radial-gradient(circle at 18% 8%, rgba(99, 102, 241, 0.2), transparent 42%),
+    radial-gradient(circle at 82% 16%, rgba(139, 92, 246, 0.16), transparent 40%),
+    var(--bg);
+}
+
+h1,
+h2,
+h3,
+h4,
+h5,
+h6 {
+  font-family: var(--font-display), sans-serif;
+}
+
+.glass-panel {
+  backdrop-filter: blur(18px);
+  background: linear-gradient(180deg, rgba(255, 255, 255, 0.72), rgba(255, 255, 255, 0.6));
+  border: 1px solid rgba(255, 255, 255, 0.65);
+}
+
+html.dark .glass-panel {
+  background: linear-gradient(180deg, rgba(15, 23, 42, 0.78), rgba(15, 23, 42, 0.62));
+  border: 1px solid rgba(148, 163, 184, 0.2);
+}
+
+.chart-wrapper {
+  height: 280px;
+  width: 100%;
+}
