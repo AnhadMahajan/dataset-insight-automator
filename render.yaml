@@ -8,14 +8,16 @@ services:
     ipAllowList: []
 
   # -------------------------------------------------------------------
-  # Backend (FastAPI)
+  # Backend + Worker (combined: FastAPI + Celery in one web service)
+  # Render free tier does not support background worker service type.
+  # render-entrypoint.sh starts both uvicorn and celery in one container.
   # -------------------------------------------------------------------
   - type: web
     name: insight-backend
     plan: free
     runtime: docker
-    dockerfilePath: ./backend/Dockerfile
-    dockerContext: ./backend
+    dockerfilePath: ./Dockerfile.render
+    dockerContext: .
     healthCheckPath: /health
     envVars:
       - key: APP_NAME
@@ -49,32 +51,6 @@ services:
         value: 10/minute
       - key: STATUS_RATE_LIMIT
         value: 60/minute
-
-  # -------------------------------------------------------------------
-  # Worker (Celery)
-  # -------------------------------------------------------------------
-  - type: worker
-    name: insight-worker
-    plan: free
-    runtime: docker
-    dockerfilePath: ./worker/Dockerfile
-    dockerContext: ./worker
-    envVars:
-      - key: REDIS_URL
-        fromService:
-          type: redis
-          name: insight-redis
-          property: connectionString
-      - key: CELERY_BROKER_URL
-        fromService:
-          type: redis
-          name: insight-redis
-          property: connectionString
-      - key: CELERY_RESULT_BACKEND
-        fromService:
-          type: redis
-          name: insight-redis
-          property: connectionString
       - key: GEMINI_API_KEY
         sync: false
       - key: GEMINI_MODEL
