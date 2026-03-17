@@ -7,13 +7,23 @@ const METHODS_WITH_BODY = new Set(["POST", "PUT", "PATCH", "DELETE"]);
 function resolveBackendBaseUrl(): string {
   const defaultUrl = process.env.NODE_ENV === "development"
     ? "http://localhost:8000"
-    : "http://insight-backend:10000";
+    : "";
   const raw = process.env.BACKEND_URL ?? defaultUrl;
+  if (!raw) {
+    throw new Error("BACKEND_URL is not configured for the frontend service.");
+  }
   return raw.startsWith("http") ? raw : `http://${raw}`;
 }
 
 async function proxy(request: NextRequest, path: string[]): Promise<Response> {
-  const backendBase = resolveBackendBaseUrl();
+  let backendBase = "";
+  try {
+    backendBase = resolveBackendBaseUrl();
+  } catch (error) {
+    const detail = error instanceof Error ? error.message : "Proxy configuration error.";
+    return Response.json({ detail }, { status: 500 });
+  }
+
   const target = new URL(`${backendBase}/api/v1/${path.join("/")}`);
   target.search = request.nextUrl.search;
 
@@ -26,12 +36,21 @@ async function proxy(request: NextRequest, path: string[]): Promise<Response> {
     body = payload.byteLength > 0 ? Buffer.from(payload) : undefined;
   }
 
-  const upstream = await fetch(target.toString(), {
-    method: request.method,
-    headers,
-    body,
-    redirect: "manual",
-  });
+  let upstream: Response;
+  try {
+    upstream = await fetch(target.toString(), {
+      method: request.method,
+      headers,
+      body,
+      redirect: "manual",
+    });
+  } catch (error) {
+    const detail = error instanceof Error ? error.message : "Failed to reach backend service.";
+    return Response.json(
+      { detail: `Failed to reach backend at ${backendBase}. ${detail}` },
+      { status: 502 },
+    );
+  }
 
   const responseHeaders = new Headers(upstream.headers);
   responseHeaders.delete("content-length");
