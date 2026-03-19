@@ -72,9 +72,6 @@ services:
     healthCheckPath: /
     envVars:
       - key: BACKEND_URL
-        fromService:
-          name: insight-backend
-          type: web
-          property: hostport
+        value: https://insight-backend-jpj3.onrender.com
       - key: NODE_ENV
         value: production
