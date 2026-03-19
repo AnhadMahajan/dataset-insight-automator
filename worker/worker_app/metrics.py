@@ -53,6 +53,14 @@ def _to_serializable(value: Any) -> Any:
     return str(value)
 
 
+def _parse_datetime(series: pd.Series) -> pd.Series:
+    # Prefer mixed-format parsing to avoid noisy inference warnings on heterogeneous data.
+    try:
+        return pd.to_datetime(series, errors="coerce", format="mixed")
+    except (TypeError, ValueError):
+        return pd.to_datetime(series, errors="coerce")
+
+
 def _infer_datetime_column(series: pd.Series) -> bool:
     if pd.api.types.is_datetime64_any_dtype(series):
         return True
@@ -62,7 +70,7 @@ def _infer_datetime_column(series: pd.Series) -> bool:
         return False
 
     sample = non_null.astype(str).head(500)
-    parsed = pd.to_datetime(sample, errors="coerce")
+    parsed = _parse_datetime(sample)
     parse_ratio = float(parsed.notna().mean())
     return parse_ratio >= 0.7
 
@@ -222,7 +230,7 @@ def _build_trends(df: pd.DataFrame, datetime_cols: list[str], numeric_cols: list
     selected_col: str | None = None
     parsed_dates: pd.Series | None = None
     for dt_col in datetime_cols:
-        parsed = pd.to_datetime(df[dt_col], errors="coerce")
+        parsed = _parse_datetime(df[dt_col])
         if int(parsed.notna().sum()) >= 2:
             selected_col = dt_col
             parsed_dates = parsed

@@ -1,14 +1,46 @@
 import { JobDetail, JobListResponse, UploadResponse } from "@/lib/types";
 
+function parseApiError(errorBody: string): string {
+  if (!errorBody) {
+    return "Unexpected API error.";
+  }
+
+  try {
+    const parsed = JSON.parse(errorBody) as {
+      detail?: unknown;
+      message?: unknown;
+      error?: unknown;
+    };
+
+    for (const candidate of [parsed.detail, parsed.message, parsed.error]) {
+      if (typeof candidate === "string" && candidate.trim()) {
+        return candidate;
+      }
+    }
+  } catch {
+    // If body is plain text or HTML, fall back to raw text.
+  }
+
+  return errorBody;
+}
+
 async function request<T>(path: string, options?: RequestInit): Promise<T> {
-  const response = await fetch(path, {
-    ...options,
-    cache: "no-store"
-  });
+  let response: Response;
+  try {
+    response = await fetch(path, {
+      ...options,
+      cache: "no-store"
+    });
+  } catch (error) {
+    const detail = error instanceof Error ? error.message : "Unknown network error.";
+    throw new Error(
+      `Network request failed (${path}): ${detail}. If this was an upload, check History because the job may still have been accepted.`
+    );
+  }
 
   if (!response.ok) {
     const errorBody = await response.text();
-    throw new Error(errorBody || "Unexpected API error.");
+    throw new Error(parseApiError(errorBody));
   }
 
   return response.json() as Promise<T>;

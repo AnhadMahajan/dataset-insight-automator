@@ -3,6 +3,22 @@ import { NextRequest } from "next/server";
 export const runtime = "nodejs";
 
 const METHODS_WITH_BODY = new Set(["POST", "PUT", "PATCH", "DELETE"]);
+const HOP_BY_HOP_HEADERS = new Set([
+  "connection",
+  "keep-alive",
+  "proxy-authenticate",
+  "proxy-authorization",
+  "te",
+  "trailer",
+  "transfer-encoding",
+  "upgrade",
+]);
+
+function stripHopByHopHeaders(headers: Headers): void {
+  for (const header of HOP_BY_HOP_HEADERS) {
+    headers.delete(header);
+  }
+}
 
 function resolveBackendBaseUrl(): string {
   const defaultUrl = process.env.NODE_ENV === "development"
@@ -29,6 +45,8 @@ async function proxy(request: NextRequest, path: string[]): Promise<Response> {
 
   const headers = new Headers(request.headers);
   headers.delete("host");
+  headers.delete("content-length");
+  stripHopByHopHeaders(headers);
 
   let body: BodyInit | undefined;
   if (METHODS_WITH_BODY.has(request.method)) {
@@ -52,10 +70,22 @@ async function proxy(request: NextRequest, path: string[]): Promise<Response> {
     );
   }
 
+  let upstreamBody: ArrayBuffer;
+  try {
+    upstreamBody = await upstream.arrayBuffer();
+  } catch (error) {
+    const detail = error instanceof Error ? error.message : "Failed to read backend response body.";
+    return Response.json(
+      { detail: `Backend responded but proxy could not read the response. ${detail}` },
+      { status: 502 },
+    );
+  }
+
   const responseHeaders = new Headers(upstream.headers);
   responseHeaders.delete("content-length");
+  stripHopByHopHeaders(responseHeaders);
 
-  return new Response(upstream.body, {
+  return new Response(upstreamBody, {
     status: upstream.status,
     headers: responseHeaders,
   });
