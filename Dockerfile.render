@@ -20,6 +20,11 @@ COPY worker/worker_app ./worker_app
 COPY render-entrypoint.sh /render-entrypoint.sh
 RUN chmod +x /render-entrypoint.sh
 
+RUN adduser --disabled-password --gecos "" appuser \
+	&& chown -R appuser:appuser /app /render-entrypoint.sh
+
+USER appuser
+
 EXPOSE 8000
 
 ENTRYPOINT ["/render-entrypoint.sh"]
