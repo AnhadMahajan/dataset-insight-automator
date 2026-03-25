@@ -1,5 +1,6 @@
 from __future__ import annotations
 
+import logging
 from typing import Any
 
 import requests
@@ -7,6 +8,7 @@ import requests
 from worker_app.settings import get_settings
 
 settings = get_settings()
+logger = logging.getLogger(__name__)
 
 
 def _summary_to_html(summary: str, metrics: dict[str, Any]) -> str:
@@ -30,6 +32,10 @@ def _summary_to_html(summary: str, metrics: dict[str, Any]) -> str:
 
 def send_summary_email(recipient_email: str, summary: str, metrics: dict[str, Any]) -> None:
     if not settings.resend_api_key:
+        logger.warning(
+            "Skipping email send: RESEND_API_KEY is not configured. "
+            "Set RESEND_API_KEY in environment variables to enable email delivery."
+        )
         return
 
     payload = {
@@ -49,3 +55,4 @@ def send_summary_email(recipient_email: str, summary: str, metrics: dict[str, An
         timeout=30,
     )
     response.raise_for_status()
+    logger.info(f"Email sent successfully to {recipient_email}")

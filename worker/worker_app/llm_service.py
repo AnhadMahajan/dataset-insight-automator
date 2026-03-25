@@ -1,6 +1,7 @@
 from __future__ import annotations
 
 import json
+import logging
 from typing import Any
 
 import requests
@@ -8,6 +9,7 @@ import requests
 from worker_app.settings import get_settings
 
 settings = get_settings()
+logger = logging.getLogger(__name__)
 
 
 def _build_prompt(summary: dict[str, Any]) -> str:
@@ -56,6 +58,10 @@ def _fallback_summary(summary: dict[str, Any]) -> str:
 
 def generate_insight_summary(metrics: dict[str, Any]) -> str:
     if not settings.gemini_api_key:
+        logger.warning(
+            "GEMINI_API_KEY is not configured; using fallback template summary. "
+            "Set GEMINI_API_KEY in environment variables to enable AI-generated insights."
+        )
         return _fallback_summary(metrics)
 
     endpoint = (
