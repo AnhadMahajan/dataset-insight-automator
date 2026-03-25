@@ -23,29 +23,41 @@ export default function UploadPage() {
 
   const canSubmit = useMemo(() => Boolean(email && file && !loading), [email, file, loading]);
 
+  const normalizeFilename = (value: string): string => value.trim().toLowerCase().replace(/[^a-z0-9._-]/g, "_");
+
   const recoverRecentJob = async (targetEmail: string, targetFile: File): Promise<string | null> => {
     try {
-      const response = await fetchJobs(25);
+      const response = await fetchJobs(100);
       const emailNormalized = targetEmail.trim().toLowerCase();
       const filenameNormalized = targetFile.name.trim().toLowerCase();
-      const nowMs = Date.now();
-      const maxAgeMs = 5 * 60 * 1000;
+      const filenameSanitized = normalizeFilename(targetFile.name);
 
-      const matched = response.jobs
-        .filter((job) => {
-          const createdAtMs = Date.parse(job.created_at);
-          if (!Number.isFinite(createdAtMs) || nowMs - createdAtMs > maxAgeMs) {
-            return false;
-          }
+      const sortedJobs = [...response.jobs].sort(
+        (left, right) => Date.parse(right.created_at) - Date.parse(left.created_at)
+      );
 
-          return (
-            job.recipient_email.trim().toLowerCase() === emailNormalized
-            && job.filename.trim().toLowerCase() === filenameNormalized
-          );
-        })
-        .sort((left, right) => Date.parse(right.created_at) - Date.parse(left.created_at));
+      const exactFilenameMatch = sortedJobs.find((job) => {
+        const jobEmail = job.recipient_email.trim().toLowerCase();
+        const jobFilename = job.filename.trim().toLowerCase();
+        const jobFilenameSanitized = normalizeFilename(job.filename);
 
-      return matched[0]?.id ?? null;
+        return (
+          jobEmail === emailNormalized
+          && (jobFilename === filenameNormalized || jobFilenameSanitized === filenameSanitized)
+        );
+      });
+
+      if (exactFilenameMatch) {
+        return exactFilenameMatch.id;
+      }
+
+      // Fallback for cases where upstream renamed the file unexpectedly.
+      const emailOnlyMatch = sortedJobs.find((job) => job.recipient_email.trim().toLowerCase() === emailNormalized);
+      if (emailOnlyMatch) {
+        return emailOnlyMatch.id;
+      }
+
+      return null;
     } catch {
       return null;
     }
@@ -76,6 +88,9 @@ export default function UploadPage() {
           setTimeout(() => router.push(`/insights/${recoveredJobId}`), 900);
           return;
         }
+
+        setError("Upload response was interrupted. Your dataset may still be processing. Please open History to confirm the latest job.");
+        return;
       }
 
       setError(message);
