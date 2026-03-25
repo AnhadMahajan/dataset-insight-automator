@@ -46,6 +46,7 @@ async function proxy(request: NextRequest, path: string[]): Promise<Response> {
   const headers = new Headers(request.headers);
   headers.delete("host");
   headers.delete("content-length");
+  headers.delete("accept-encoding");
   stripHopByHopHeaders(headers);
 
   let body: BodyInit | undefined;
@@ -83,6 +84,7 @@ async function proxy(request: NextRequest, path: string[]): Promise<Response> {
 
   const responseHeaders = new Headers(upstream.headers);
   responseHeaders.delete("content-length");
+  responseHeaders.delete("content-encoding");
   stripHopByHopHeaders(responseHeaders);
 
   return new Response(upstreamBody, {
