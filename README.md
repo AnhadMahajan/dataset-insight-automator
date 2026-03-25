@@ -2,6 +2,12 @@
 
 Sales Insight Automator is a production-oriented SaaS prototype that converts CSV/XLSX datasets into AI-generated executive insights and delivers reports by email.
 
+## Live App
+
+- Frontend: https://insight-frontend-fs7r.onrender.com/
+- Backend Health: https://insight-backend-jpj3.onrender.com/health
+- Backend API Docs: https://insight-backend-jpj3.onrender.com/docs
+
 ## Stack
 
 - Frontend: Next.js 14, TypeScript, TailwindCSS, Framer Motion, Recharts
@@ -35,7 +41,6 @@ Sales Insight Automator is a production-oriented SaaS prototype that converts CS
 - `backend/` FastAPI API service
 - `worker/` Celery processing service
 - `.github/workflows/` CI pipeline
-- `docs/` additional docs
 
 ## Local Run (Docker)
 
@@ -100,3 +105,6 @@ GitHub Actions workflow runs on pull requests to `main` and performs:
 - Frontend dependency install + lint
 - Python formatting checks (Black/isort)
 - Docker image builds for frontend/backend/worker
+
+
+
